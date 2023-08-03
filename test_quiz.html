@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>測試測驗畫面</title>
+    <!-- 引入Bootstrap的CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="text-center mb-4"><i class="fas fa-book-open"></i> 測試測驗畫面</h1>
+        <div class="row">
+            <div class="col-md-6 offset-md-3">
+                <form id="quizForm">
+                  <div class="text-end mb-2">
+                    <span class="badge bg-secondary">題目 {{ currentQuestion + 1 }} / {{ totalQuestions }}</span>
+                  </div>
+                      <div class="card">
+                        <div class="card-header">
+                            <h5 id="question" class="card-title">{{ currentQuiz.question }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="answer" id="option1" value="0">
+                                <label class="form-check-label" for="option1">{{ currentQuiz.options[0] }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="answer" id="option2" value="1">
+                                <label class="form-check-label" for="option2">{{ currentQuiz.options[1] }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="answer" id="option3" value="2">
+                                <label class="form-check-label" for="option3">{{ currentQuiz.options[2] }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="answer" id="option4" value="3">
+                                <label class="form-check-label" for="option4">{{ currentQuiz.options[3] }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="button" class="btn btn-primary" onclick="nextQuestion()">下一題</button>
+                        <button type="button" class="btn btn-danger" onclick="endQuiz()">結束測驗</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ... 省略其他部分 ... -->
+
+    <script>
+        // 定義一個全局變數來保存題庫資料
+        let quizData = [
+            {
+                "question": "這是第一題嗎？",
+                "options": ["是", "否", "也許", "不確定"],
+                "answer": "是"
+            },
+            {
+                "question": "2 + 2 = ?",
+                "options": ["2", "3", "4", "5"],
+                "answer": "4"
+            },
+            {
+                "question": "台灣的首都是？",
+                "options": ["台北", "高雄", "台中", "台南"],
+                "answer": "台北"
+            }
+        ];
+
+        // 定義全局變數來保存目前的題目索引和分數
+        let currentQuestion = 0;
+        let score = 0;
+
+        // 開始測驗
+        function startQuiz() {
+            showQuestion();
+        }
+
+        // 顯示目前的題目
+        function showQuestion() {
+            if (currentQuestion < quizData.length) {
+                const currentQuiz = quizData[currentQuestion];
+                const questionElement = document.getElementById("question");
+                const option1Element = document.getElementById("option1");
+                const option2Element = document.getElementById("option2");
+                const option3Element = document.getElementById("option3");
+                const option4Element = document.getElementById("option4");
+
+                questionElement.textContent = currentQuiz.question;
+                option1Element.value = "0";
+                option1Element.nextElementSibling.textContent = currentQuiz.options[0];
+                option2Element.value = "1";
+                option2Element.nextElementSibling.textContent = currentQuiz.options[1];
+                option3Element.value = "2";
+                option3Element.nextElementSibling.textContent = currentQuiz.options[2];
+                option4Element.value = "3";
+                option4Element.nextElementSibling.textContent = currentQuiz.options[3];
+            }
+        }
+
+        // 下一題
+        function nextQuestion() {
+            const form = document.getElementById("quizForm");
+            const selectedAnswer = form.elements["answer"].value;
+
+            if (selectedAnswer !== "") {
+                // 檢查答案是否正確並更新分數
+                const currentQuiz = quizData[currentQuestion];
+                if (currentQuiz.options[selectedAnswer] === currentQuiz.answer) {
+                    score++;
+                }
+
+                // 顯示下一題或結束測驗
+                currentQuestion++;
+                if (currentQuestion < quizData.length) {
+                    showQuestion();
+                } else {
+                    endQuiz();
+                }
+            } else {
+                alert("請選擇一個答案。");
+            }
+        }
+
+        // 結束測驗
+        function endQuiz() {
+            // 計算百分比分數
+            const percentage = (score / quizData.length) * 100;
+
+            // 跳出結果提示
+            const resultText = `您的分數為：${score} / ${quizData.length} (${percentage.toFixed(2)}%)`;
+            alert(resultText);
+
+            // 重置測驗
+            currentQuestion = 0;
+            score = 0;
+            showQuestion();
+        }
+
+        // 在頁面載入完成後開始測驗
+        document.addEventListener("DOMContentLoaded", function () {
+            startQuiz();
+        });
+    </script>
+</body>
+</html>

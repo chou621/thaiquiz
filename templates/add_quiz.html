@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>新增題目</title>
+    <!-- 引入Bootstrap的CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha512-fLgVe5zFg8Dor9P4Tglz/Jjk5aL3YpLd56/Pcn6s1SWITGlUbx3oJWAC3G2Lx4i5ef8ceqcrdz9+02iKRVQ3g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+
+    h1 {
+        color: #007BFF;
+    }
+
+    form {
+        margin: auto;
+        width: 50%;
+    }
+
+    label {
+        display: block;
+        margin-top: 10px;
+    }
+
+    input[type="text"],
+    select {
+        width: 100%;
+        padding: 5px;
+        font-size: 16px;
+    }
+
+    input[type="submit"] {
+        margin-top: 10px;
+        background-color: #007BFF;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        text-decoration: none;
+        cursor: pointer;
+    }
+</style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="mt-5 mb-4 text-center"><i class="fas fa-plus-circle"></i> 新增題目</h1>
+        <form action="/add" method="post">
+            <div class="form-group">
+                <label>題目:</label>
+                <input class="form-control" type="text" name="question" id="question" required>
+                <div id="message" style="color: red;"></div> <!-- 用來顯示重複題目的提示訊息 -->
+            </div>
+            <div class="form-group">
+                <label>正確答案</label>
+                <input type="text" class="form-control" id="answer" name="answer" required>
+            </div>
+            <div class="text-center">
+                <a class="btn btn-secondary" href="/">返回</a>
+                <button type="submit" class="btn btn-primary" onclick="checkDuplicate(event)">新增</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function checkAnswer() {
+            const answerInput = document.getElementById("answer").value;
+            const validOptions = ["1", "2", "3", "4"];
+            if (!validOptions.includes(answerInput)) {
+                alert("請輸入有效的正確答案編號（1、2、3 或 4）");
+                event.preventDefault(); // 防止表單提交
+            }
+        }
+    </script>
+
+<script>
+    // 使用 fetch 函式向伺服器端發送檢查題目是否已存在的請求
+    function checkDuplicateQuestion(question) {
+        return fetch(`/check_duplicate/${encodeURIComponent(question)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => data.exists)
+            .catch(error => {
+                console.error('Error:', error);
+                return false; // 處理錯誤情況，假設題目不重複
+            });
+    }
+
+    // 監聽題目輸入框的變化
+    document.getElementById("question").addEventListener("input", function () {
+        const question = this.value.trim();
+        const messageElement = document.getElementById("message");
+
+        // 清空提示訊息
+        messageElement.textContent = "";
+
+        // 如果題目為空或少於兩個字元，不進行檢查
+        if (question === "" || question.length < 2) {
+            return;
+        }
+
+        // 檢查題目是否已存在
+        checkDuplicateQuestion(question)
+            .then(exists => {
+                if (exists) {
+                    messageElement.textContent = "相同題目已存在，請重新輸入。";
+                }
+            });
+    });
+</script>
+</body>
+</html>

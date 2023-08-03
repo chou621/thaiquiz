@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>泰語題庫測驗</title>
+    <!-- 引入Bootstrap的CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 20px;
+        }
+        h1 {
+            color: #007BFF;
+            margin-bottom: 20px;
+        }
+        .quiz-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        .quiz-card {
+            max-width: 250px; /* 調整卡片寬度，以容納每個選項在同一行 */
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .question {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .options {
+            display: flex;
+            flex-direction: column; /* 將選項改成垂直排列 */
+            margin-top: 15px;
+        }
+        .option {
+            margin: 5px;
+        }
+        .submit-btn {
+            margin-top: 20px;
+        }
+        .icon-sound {
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .score-section {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .score {
+            font-weight: bold;
+            color: #007BFF;
+        }
+        .question-feedback {
+            margin-top: 10px;
+        }
+        .correct-answer {
+            color: green;
+            font-weight: bold;
+        }
+        .incorrect-answer {
+            color: red;
+            font-weight: bold;
+        }
+        .options input[type="radio"] {
+            pointer-events: none;
+        }
+        /* 新增錯誤題目的顏色標示 */
+        .incorrect-question {
+            background-color: #FFD2D2;
+        }
+        /* 新增正確選項的顏色標示 */
+        .correct-option {
+            background-color: #D1FFD2;
+        }
+        .home-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+        .refresh-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        /* 新增樣式來標示未回答的題目 */
+        .unanswered-question {
+        background-color: #FFD2D2;
+        }
+        /* 新增錯誤icon的樣式 */
+        .incorrect-icon {
+            color: red;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('index') }}" class="btn btn-primary home-button"><i class="fas fa-home"></i> 回首頁</a>
+    <button class="btn btn-primary refresh-button" onclick="refreshQuiz()"><i class="fas fa-redo"></i> 再做一次</button>
+    <div class="container">
+        <h1><i class="fas fa-book"></i> 泰語題庫測驗</h1>
+        <div class="quiz-container" id="quizContainer">
+            <form id="quizForm">
+            <!-- 這裡會動態插入測驗題目和選項 -->
+        </form>
+        </div>
+            <button class="btn btn-success submit-btn" onclick="submitQuiz()"><i class="fas fa-check"></i> 送出測驗</button>
+        <!-- 成績顯示區塊 -->
+        <div class="score-section">
+            <p>得分：<span class="score" id="score">0</span> 分</p>
+        </div>
+
+        <!-- 顯示錯誤的題目 -->
+        <div class="incorrect-questions" id="incorrectQuestions">
+            <ul id="incorrectQuestionsList">
+            </ul>
+        </div>
+
+        <!-- 顯示提交後的回饋訊息 -->
+        <div class="feedback-section" id="feedbackSection">
+        </div>
+    </div>
+
+    <script>
+        function refreshQuiz() {
+            // 簡單地重新載入頁面，以重新整理測驗
+            location.reload();
+        }
+        // 在這裡，使用模板引擎內傳遞的測驗資料來動態生成測驗表單
+        const quizData = {{ quizData | safe }};
+        const ALL_quizData = {{ ALL_quizData | safe }};
+
+        function shuffleArray(array) {
+            // 使用 Fisher-Yates 洗牌演算法來隨機排列陣列順序
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function generateQuiz() {
+            const quizContainer = document.getElementById("quizContainer");
+            quizContainer.innerHTML = ""; // 清空之前的內容，避免重複生成
+
+            shuffleArray(quizData).forEach((quiz, index) => {
+                const quizCard = document.createElement("div");
+                quizCard.classList.add("quiz-card", "col-md-4");
+                quizCard.innerHTML = `
+                    <div class="question">
+                        <span class="icon-number">${index + 1}</span>
+                        <label class="icon-sound" onclick="playSound('${quiz.question}')">${quiz.question}
+                        <i class="fas fa-volume-up" ></i></label>
+                    </div>
+                    <div class="options">
+                        ${generateOptions(quiz, index)}
+                    </div>
+                `;
+                quizContainer.appendChild(quizCard);
+            });
+        }
+
+        function generateOptions(quiz, index) {
+            const options = [quiz.answer];
+
+            // 從 ALL_quizData 中選取其他三個答案，確保不會重複
+            const otherAnswers = ALL_quizData
+                .filter((item) => item.answer !== quiz.answer) // 排除正確答案
+                .map((item) => item.answer); // 取得其他所有答案
+            const randomOtherAnswers = shuffleArray(otherAnswers).slice(0, 3); // 隨機選取三個答案
+            options.push(...randomOtherAnswers);
+
+            // 隨機調整選項順序
+            const randomizedOptions = shuffleArray(options);
+
+            let optionsHTML = "";
+            randomizedOptions.forEach((option, optionIndex) => {
+                const optionId = `option-${index}-${optionIndex}`;
+                optionsHTML += `<label class="form-check-label" for="${optionId}" onclick="removeUnansweredClass(${index})">
+                <div style="display: block;" class="form-check option">
+                <input class="form-check-input" type="radio" name="question-${index}" id="${optionId}" value="${option}">
+                ${option}
+                </div></label>`;
+            });
+            return optionsHTML;
+        }
+        
+        // 新增函式來即時移除未回答題目的標記
+        function removeUnansweredClass(index) {
+            const questionCard = document.querySelectorAll(".quiz-card")[index];
+            questionCard.classList.remove("unanswered-question");
+        }
+
+        // 生成測驗
+        generateQuiz();
+
+        function playSound(question) {
+            // 使用 Fetch API 來請求播放音檔的路由
+            fetch(`/play_audio/${encodeURIComponent(question)}`)
+                .then(response => response.blob())
+                .then(blob => {
+                    const audioURL = URL.createObjectURL(blob);
+                    const audio = new Audio(audioURL);
+                    audio.play();
+                })
+                .catch(error => {
+                    console.error("無法播放音檔:", error);
+                });
+        }
+
+
+        function submitQuiz() {
+            // 跳出確認視窗
+            const confirmation = confirm("確定要送出測驗嗎？");
+            if (confirmation) {
+            const totalQuestions = quizData.length;
+            let score = 0;
+            const incorrectQuestions = [];
+            const unansweredQuestions = []; // 儲存未回答的題目
+            incorrectQuestions.length = 0; // 在填入新的錯誤題目之前先清空incorrectQuestions陣列
+
+
+    // 驗證每個題目都有回答
+    for (let index = 0; index < totalQuestions; index++) {
+        const options = document.querySelectorAll(`[name="question-${index}"]:checked`);
+        if (options.length === 0) {
+            // 標示未回答的題目
+            const questionCard = document.querySelectorAll(".quiz-card")[index];
+            questionCard.classList.add("unanswered-question");
+            unansweredQuestions.push(index + 1); // 將未回答的題目編號儲存起來
+        } else {
+            // 已回答的題目則移除標記
+            const questionCard = document.querySelectorAll(".quiz-card")[index];
+            questionCard.classList.remove("unanswered-question");
+
+            const selectedOption = options[0].value;
+            const correctOption = quizData[index].answer;
+
+            if (selectedOption === correctOption) {
+                score++;
+            } else {
+                // 紀錄回答錯誤的題目
+                incorrectQuestions.push({ question: quizData[index].question, answer: correctOption });
+            }
+        }
+    }
+            // 檢查是否有未回答的題目
+            if (unansweredQuestions.length > 0) {
+                // 跳出 alert 提示未完成的題目有哪些
+                const alertMessage = `您尚未回答以下題目：${unansweredQuestions.join(", ")}`;
+                alert(alertMessage);
+
+                // 標記未回答的題目
+                unansweredQuestions.forEach((questionIndex) => {
+                    const questionCard = document.querySelectorAll(".quiz-card")[questionIndex - 1];
+                    questionCard.classList.add("unanswered-question");
+                });
+
+                return; // 阻止繼續執行測驗提交
+            }
+
+            // 計算得分並顯示
+            const percentage = (score / totalQuestions) * 100;
+            document.getElementById("score").textContent = `${score} / ${totalQuestions} (${percentage.toFixed(2)}%)`;
+
+            // 顯示回答錯誤的題目並標示正確選項
+            const incorrectQuestionsList = document.getElementById("incorrectQuestionsList");
+            incorrectQuestionsList.innerHTML = "";
+
+            incorrectQuestions.forEach((incorrectQuestion) => {
+                // 標示正確選項
+                const questionDivs = document.querySelectorAll(".question");
+                questionDivs.forEach((questionDiv, index) => {
+                    if (questionDiv.textContent.includes(incorrectQuestion.question)) {
+                        const optionsDiv = questionDiv.nextElementSibling;
+                        const options = optionsDiv.getElementsByClassName("form-check");
+                        const correctOption = Array.from(options).find((option) => option.textContent.trim() === incorrectQuestion.answer);
+
+                        if (correctOption) {
+                            correctOption.classList.add("correct-option");
+                        }
+                        // 新增錯誤icon
+                        const iconHTML = `<i class="fas fa-times-circle incorrect-icon"></i>`;
+                        questionDiv.insertAdjacentHTML("afterbegin", iconHTML);
+                    }
+                });
+            });
+
+            // 顯示提交後的回饋訊息
+            const feedbackSection = document.getElementById("feedbackSection");
+            if (percentage === 100) {
+                feedbackSection.textContent = "恭喜！您回答正確！";
+                feedbackSection.style.color = "green";
+            } else if (percentage >= 60) {
+                feedbackSection.textContent = "您已通過測驗！";
+                feedbackSection.style.color = "green";
+            } else {
+                feedbackSection.textContent = "您未通過測驗，請再接再厲。";
+                feedbackSection.style.color = "red";
+            }
+
+            // 禁用所有選項
+            const allOptions = document.querySelectorAll('input[type="radio"]');
+            allOptions.forEach((option) => {
+                option.disabled = true;
+            });
+            
+            // 隱藏提交按鈕
+            const submitButton = document.querySelector(".submit-btn");
+            submitButton.style.display = "none";
+          }
+        }
+    </script>
+</body>
+</html>
